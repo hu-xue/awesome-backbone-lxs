@@ -664,7 +664,7 @@ class GCN(BaseModule):
         
         features = x.cpu().data.numpy()
         # 建图
-        print(kwargs)
+        # print(kwargs)
         # {'targets': tensor([1, 1, 0, 0, 4, 3, 1, 4], device='cuda:0')}
         targets = kwargs['targets']
         targets = targets.cpu().data.numpy()

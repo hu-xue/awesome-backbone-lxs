@@ -158,14 +158,14 @@ val_pipeline = [
 
 # train
 data_cfg = dict(
-    batch_size = 8,
-    num_workers = 2,
+    batch_size = 16,
+    num_workers = 4,
     train = dict(
         pretrained_flag = False,
         pretrained_weights = '',
         freeze_flag = False,
         freeze_layers = ('backbone',),
-        epoches = 20,
+        epoches = 100,
     ),
     test=dict(
         ckpt = '',
@@ -183,7 +183,7 @@ data_cfg = dict(
 # optimizer
 optimizer_cfg = dict(
     type='SGD',
-    lr=0.1 * 8 / 256,
+    lr=0.1 * 16 / 256,
     momentum=0.9,
     weight_decay=1e-4)
 
