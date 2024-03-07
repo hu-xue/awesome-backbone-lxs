@@ -42,7 +42,7 @@ class BuildNet(BaseModule):
             for param in layers.parameters():
                 param.requires_grad = False
     
-    def extract_feat(self, img, stage='neck'):
+    def extract_feat(self, img, stage='neck', **kwargs):
         """Directly extract features from the specified stage.
 
         Args:
@@ -110,7 +110,7 @@ class BuildNet(BaseModule):
             (f'Invalid output stage "{stage}", please choose from "backbone", '
              '"neck" and "pre_logits"')
 
-        x = self.backbone(img)
+        x = self.backbone(img, **kwargs)
 
         if stage == 'backbone':
             return x
@@ -121,7 +121,7 @@ class BuildNet(BaseModule):
             return x
     
     def forward(self, x, return_loss=True, train_statu=False, **kwargs):
-        x = self.extract_feat(x)
+        x = self.extract_feat(x, **kwargs)  #传入target，即标签信息
         
         if not train_statu:
             if return_loss:

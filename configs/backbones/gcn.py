@@ -17,7 +17,7 @@ import math
 import numpy as np
 
 from sklearn.neighbors import kneighbors_graph
-
+import torch.nn.functional as F
 
 
 eps = 1.0e-5
@@ -641,7 +641,7 @@ class GCN(BaseModule):
                 elif isinstance(m, BasicBlock):
                     constant_init(m.norm2, 0)
 
-    def forward(self, x):
+    def forward(self, x, **kwargs):
         if self.deep_stem:
             x = self.stem(x)
         else:
@@ -663,8 +663,15 @@ class GCN(BaseModule):
         x = self.fc(x)
         
         features = x.cpu().data.numpy()
-        adj = kneighbors_graph(features, 4, include_self=True).toarray()   # knn生成邻接矩阵
-
+        # 建图
+        print(kwargs)
+        # {'targets': tensor([1, 1, 0, 0, 4, 3, 1, 4], device='cuda:0')}
+        targets = kwargs['targets']
+        targets = targets.cpu().data.numpy()
+        adj = genA(targets)
+        
+        
+        # adj = kneighbors_graph(features, 2, include_self=True)  # knn生成邻接矩阵
         # if 1 > 0:
         #     adj[:8, :8] = np.eye(8)
         A, D = process_graph(adj)
@@ -672,8 +679,14 @@ class GCN(BaseModule):
         x = self.gc1(x, A, D)
         x = self.gc2(x, A, D)
 
-
+        # new code 
+        # x = F.relu(self.gc1(x, adj))
+        # x = F.dropout(x, 0.5, training=self.training)
+        # x = self.gc2(x, adj)
         return x
+
+
+        # return x
     
                 
     
@@ -728,13 +741,22 @@ class GraphConvolution(Module):
 def process_graph(adj):
     A = np.asmatrix(adj)
     I = np.eye(len(A))
-    A_hat = A + I
+    # A_hat = A + I
+    A_hat = A
     D_hat = np.array(np.sum(A_hat, axis=0))[0]
     D_hat = D_hat**0.5
     D_hat = np.matrix(np.diag(D_hat))
     D_hat = D_hat**-1
     return A_hat, D_hat
 
+
+def genA(targets):
+    A = np.zeros((len(targets), len(targets)))
+    for i in range(len(targets)):
+        for j in range(len(targets)):
+            if targets[i] == targets[j]:
+                A[i][j] = 1
+    return A
 
 
 def gen_A(num_classes, t, adj_file):
@@ -758,3 +780,12 @@ def gen_adj(A):
     D = torch.diag(D)
     adj = torch.matmul(torch.matmul(A, D).t(), D)
     return adj
+
+
+
+
+def get_centers(features, labels):
+    centers = np.zeros([max(labels) + 1, features.shape[1]])
+    for i in range(len(labels)):
+        centers[labels[i]] += features[i]
+    return centers
